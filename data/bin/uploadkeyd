@@ -1,0 +1,27 @@
+#!/bin/bash
+MODULE="uploadkeyd"
+LOGFILE="/tmp/${MODULE}.log"
+
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}" >> "${LOGFILE}"
+        printf '|%s' "${MODULE}" "$@"  >> "${LOGFILE}"
+        printf "\n"  >> "${LOGFILE}"
+}
+
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+log "INFO" "Staring upload key daemon"
+while [ 1 ] ; do 
+    rm -f /tmp/add-key.sock
+    assert "rm -f /tmp/add-key.sock"
+    sudo -u git /bin/bash -c "umask 000 ; nc -l -U /tmp/add-key.sock | /home/git/bin/git-add-authorization"
+    log "INFO" "adding key to git account"
+done
+

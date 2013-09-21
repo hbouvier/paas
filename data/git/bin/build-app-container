@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+MODULE="build-app-container"
+
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}"
+        printf '|%s' "${MODULE}" "$@"
+        printf "\n"
+}
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+NAME="$1"
+log "INFO" "Building container for application $NAME"
+
+# Place the app inside the container
+log "INFO" "Receiving application source from git"
+ID=$(cat | docker run -i -a stdin hbouvier/ubuntu_paas /bin/bash -c "mkdir -p /app && tar -xC /app")
+docker wait $ID >/dev/null
+docker commit $ID $NAME > /dev/null
+assert "docker commit $ID $NAME"
+
+log "INFO" "Docker commiting application $NAME (ID=$ID)"
+docker logs $ID 2>&1 | sed -e 's/^/        /'
+
+# Run the builder script and attach to view output
+log "INFO" "Building application from source"
+ID=$(docker run -d $NAME /paas/build-application)
+docker attach $ID 2>&1 | sed -e 's/^/        /'
+assert "docker attach $ID"
+docker commit $ID $NAME > /dev/null
+log "INFO" "Docker commiting application $NAME (ID=$ID)"
+docker logs $ID 2>&1 | sed -e 's/^/        /'
+
+log "INFO" "SUCCESS"

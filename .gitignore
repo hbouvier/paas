@@ -1,0 +1,4 @@
+.vagrant/
+data/app_container/paas/jdk-7u40-linux-x64.gz
+.c9revisions/
+.settings

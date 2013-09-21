@@ -1,0 +1,52 @@
+# reload nginx configuration when a new app is deployed
+#
+# To install as service at boot time:
+#
+# sudo chmod +x /etc/init.d/nginx-reloader
+# sudo update-rc.d nginx-reloader defaults
+#
+start() {
+    echo "Starting nginx-reloader..."
+    start-stop-daemon --start -b -x /usr/local/bin/nginx-reloaderd
+}
+
+stop() {
+    echo "Stopping nginx_reloader..."
+    start-stop-daemon --stop -x /usr/local/bin/nginx-reloaderd
+}
+
+status() {
+    dbpid=`pgrep nginx-reloaderd`
+    if [ -z $dbpid ] ; then
+        echo "nginx-reloaderd:  not running."
+    else
+        echo "nginx-reloaderd: running."
+    fi
+}
+
+
+case "$1" in
+  start)
+    start
+    ;;
+  
+  stop)
+    stop
+    ;;
+
+  restart|reload|force-reload)
+    stop
+    start
+    ;;
+
+  status)
+    status
+    ;;
+
+  *)
+    echo "Usage: /etc/init.d/nginx-reloader {start|stop|reload|force-reload|restart|status}"
+    exit 1
+
+esac
+
+exit 0

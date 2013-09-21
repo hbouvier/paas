@@ -1,0 +1,24 @@
+#!/bin/bash
+MODULE="upload-client-key"
+LOGFILE="/tmp/${MODULE}.log"
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}"
+        printf '|%s' "${MODULE}" "$@"
+        printf "\n"
+}
+
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+log "INFO" "Receiving public key"
+KEY=$(cat)
+
+log "INFO" "Sening key $KEY to be added"
+echo $KEY | nc -U /tmp/add-key.sock
+log "INFO" "SUCCESS"

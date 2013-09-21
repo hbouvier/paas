@@ -1,0 +1,62 @@
+#!/bin/bash
+MODULE="run-app-container"
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}"
+        printf '|%s' "${MODULE}" "$@"
+        printf "\n"
+}
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+APP="$1"; CONTAINER="$2"
+log "INFO" "Staring container" "CONTAINER=$CONTAINER" "APPLICATION=$APP"
+
+# Using port 5000 as default
+PORT=5000
+NGINXPORT=5000
+
+# First deployment
+if [[ ! -f "$HOME/$APP/CONTAINER" ]]; then
+	# does the application REQUIRE a special port
+	if [[ -f "$HOME/$APP/PORT" ]]; then
+		PORT=`cat "$HOME/$APP/PORT"`
+	fi
+
+	log "INFO" "Starting application $CONTAINER" "PORT=$PORT"
+	ID=$(docker run -d -p $PORT -e PORT=$PORT $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
+	echo $ID > "$HOME/$APP/CONTAINER"
+	NGINXPORT=$(docker port $ID $PORT)
+	log "INFO" "Application $CONTAINER" "ID=$ID" "NGINX PORT=$NGINXPORT"
+	if [[ ! -f "$HOME/$APP/PORT" ]] ; then
+		echo $PORT > "$HOME/$APP/PORT"
+	fi
+	echo $NGINXPORT > "$HOME/$APP/NGINXPORT"
+
+	HOSTNAME="${APP/\//-}.$(< "$HOME/DOMAIN")"
+	$HOME/bin/nginx-app-conf ${APP/\//-} $NGINXPORT $HOSTNAME > $HOME/$APP/nginx.conf
+	nc -U /tmp/nginx-reload.sock
+	assert "nc -U /tmp/nginx-reload.sock"
+	log "INFO" "Signaling NGINX to reload the configuration" "${APP/\//-}" "$NGINXPORT" "$HOSTNAME"
+	echo $HOSTNAME > "$HOME/$APP/HOSTNAME"
+	sleep 10
+	docker logs $ID 2>&1 | sed -e 's/^/        /'
+else
+	# Redeployment 
+	OLDID=$(< "$HOME/$APP/CONTAINER")
+	log "INFO" "Terminating the running container" "ID=$OLDID"
+	docker kill $OLDID > /dev/null
+	PORT=$(< "$HOME/$APP/PORT")
+	NGINXPORT=$(< "$HOME/$APP/NGINXPORT")
+	ID=$(docker run -d -p "$NGINXPORT:$PORT" -e "PORT=$PORT" $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
+	echo $ID > "$HOME/$APP/CONTAINER"
+	log "INFO" "Starting application $CONTAINER" "PORT=$PORT" "NGINXPORT=$NGINXPORT" "ID=$ID"
+	sleep 10
+	docker logs $ID 2>&1 | sed -e 's/^/        /'
+fi
+log "INFO" "SUCCESS"

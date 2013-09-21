@@ -1,0 +1,106 @@
+#!/bin/bash
+MODULE="build-app-container"
+VERSION="0.0.1"
+JDK="jdk1.7.0_40"
+DEFAULT_NODE="v0.10.18"
+
+
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}"
+        printf '|%s' "${MODULE}" "$@"
+        printf "\n"
+}
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+log "INFO" "Version=${VERSION}"
+
+cd /app
+assert "cd /app"
+
+if [ ! -r "Procfile" ] ; then
+	log "ERROR" "file=Procfile" "msg=Not found"
+	exit -1
+fi
+
+WEB=`grep web Procfile | cut -f2-99 -d:`
+assert "extracting 'web:' line from Procfile"
+
+CMD=`echo $WEB | awk '{print $1}'`
+assert "extracting the Command to strart the application"
+log "INFO" "Command=$CMD"
+
+if [ "$CMD" == "node" -o "$CMD" == "forever" -o "$CMD" == "pm2" ] ; then
+	log "INFO" "Building node.js application container"
+        NODE=`grep "\"node\" *:" package.json | cut -f4 -d\"`
+        . /.nvm/nvm.sh
+        if [ "$NODE" == "0.8.x" ] ; then
+                NODE="v0.8.25"
+        fi
+        if [ "$NODE" == "" -o "$NODE" == "0.10.x" -o "$NODE" == "latest" -o "$NODE" == "*" ] ; then
+                NODE=$DEFAULT_NODE
+        fi
+	log "INFO" "Installing node version $NODE"
+        nvm install $NODE 2>&1 | sed -e 's/^/        /'
+	if [ $? != 0 ] ; then
+		log "WARN" "Unable to install node.js version=$NODE"
+		NODE=$DEFAULT_NODE
+        	nvm install $NODE 2>&1 | sed -e 's/^/        /'
+		assert "nvm install $NODE"
+	fi
+	if [ "$CMD" == "forever" -o "$CMD" == "pm2" ] ; then
+		log "INFO" "Installing $CMD"
+		npm install -g $CMD 2>&1 | sed -e 's/^/        /'
+		if [ $? != 0 ] ; then
+			log "WARN" "Unable to install '$CMD', defaulting to 'node' instead"
+			CMD="node"
+		fi
+	fi
+	log "INFO" "Installing npm modules"
+        npm install 2>&1 | sed -e 's/^/        /'
+	assert "npm install"
+
+	log "INFO" "Creating application startup script ./.paas-start-cmd"
+	cat > ./.paas-start-cmd << EOF_NODE
+#/bin/bash
+. /.nvm/nvm.sh
+nvm use ${NODE}
+cd /app
+$WEB
+EOF_NODE
+        chmod a+x ./.paas-start-cmd 2>&1 | sed -e 's/^/        /'
+	assert "chmod a+x ./.paas-start-cmd"
+else
+	if [ "$CMD" == "java" ] ; then
+		log "INFO" "Building java application container"
+
+		export JAVA_HOME="/usr/lib/jvm/$JDK"
+		export PATH="$JAVA_HOME/bin:${PATH}"
+
+		log "INFO" "Building java application"
+		log "INFO" "JAVA_HOME=$JAVA_HOME"
+		log "INFO" "PATH=$PATH"
+		mvn -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Dsource.skip=true clean package  2>&1 | sed -e 's/^/        /'
+		assert "mvn -Dmaven.test.skip=true -Dmaven.javadoc.skip=true -Dsource.skip=true clean package"
+
+		cat > ./.paas-start-cmd << EOF_JAVA
+#/bin/bash" > ./.paas-start-cmd
+export JAVA_HOME=/usr/lib/jvm/$JDK
+export PATH=$JAVA_HOME/bin:\${PATH}
+cd /app
+$WEB
+EOF_JAVA
+		chmod a+x ./.paas-start-cmd 2>&1 | sed -e 's/^/        /'
+		assert "chmod a+x ./.paas-start-cmd"
+	else
+		log "FATAL" "Unknown language '$CMD'"
+		exit -2
+	fi
+fi
+log "INFO" "SUCCESS"

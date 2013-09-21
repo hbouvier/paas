@@ -1,0 +1,31 @@
+#!/bin/bash
+MODULE="git-add-authorization"
+ERRORFILE="/tmp/git-add-authorization.$$"
+
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}"
+        printf '|%s' "${MODULE}" "$@"
+        printf "\n"
+}
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+log "INFO" "Receiving public key"
+KEY=$(cat)
+USER=`echo $KEY | awk '{print $3}' 2> "${ERRORFILE}"`
+if [ "$USER" == "" ] ; then
+	log "WARN" "ssh public key format unknown" "expecting algo key user@host" "`cat ${ERRORFILE}`"
+	USER="anonymous"
+fi
+rm -f "${ERRORFILE}"
+
+log "INFO" "Adding key authorization" "USER=$USER" "public KEY=$KEY"
+echo $KEY | gitreceive upload-key "$USER"
+
+log "INFO" "SUCCESS"

@@ -1,0 +1,29 @@
+#!/bin/bash
+MODULE="nginx-app-conf"
+LOGFILE="/tmp/${MODULE}.log"
+
+function log() {
+        DATE=`date '+%Y-%m-%d %H:%M:%S'`
+        printf "    ${DATE}" >> "${LOGFILE}"
+        printf '|%s' "${MODULE}" "$@" >> "${LOGFILE}"
+        printf "\n" >> "${LOGFILE}"
+}
+function assert() {
+        CODE=$?
+        if [ "$CODE" != "0" ] ; then
+                log "FATAL" "FAILURE" "$*" "code=$CODE"
+                exit $CODE
+        fi
+}
+
+APP="$1"; PORT="$2"; HOSTNAME="$3"
+log "INFO" "Configuring" "APP=$APP" "PORT=$PORT" "HOSTNAME=$HOSTNAME"
+cat<<EOF
+upstream $APP { server 127.0.0.1:$PORT; }
+server {
+  listen      80;
+  server_name $HOSTNAME;
+  location    / { proxy_pass  http://$APP; }
+}
+EOF
+log "INFO" "SUCCESS"
