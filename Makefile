@@ -1,6 +1,6 @@
 GITRECEIVE_URL ?= https://raw.github.com/progrium/gitreceive/master/gitreceive
 
-all: data/app_container/paas/jdk-7u40-linux-x64.gz dependencies .setup-git start-services done
+all: data/app_container/paas/jdk-7u40-linux-x64.gz dependencies .setup-git start-services enable-docker-api shipyard done
 
 dependencies: /usr/local/bin/gitreceive /home/git/receiver /usr/bin/docker \
 	        docker-app-container /usr/sbin/nginx /home/addkey /etc/dnsmasq.d/paas \
@@ -50,8 +50,8 @@ clean:
 data/app_container/paas/jdk-7u40-linux-x64.gz:
 	@echo "Unfortunately, this is a manual step"
 	@echo "open your browser to http://www.oracle.com/technetwork/java/javase/downloads/index.html"
-	@echo "and download the JDK7 for ubuntu 64 bits (e.g. 'jdk-7u40-linux-x64.gz')
-	@echo "then save it into the 'data/app_container/paas/' directory'
+	@echo "and download the JDK7 for ubuntu 64 bits (e.g. 'jdk-7u40-linux-x64.gz')"
+	@echo "then save it into the 'data/app_container/paas/' directory"
 	@echo "then run:"
 	@echo "sudo /bin/bash -c 'cd /root/paas && make'"
 
@@ -73,6 +73,12 @@ data/app_container/paas/jdk-7u40-linux-x64.gz:
 	apt-get update -y
 	apt-get install -y lxc-docker
 	apt-get install -y linux-image-extra-`uname -r`
+
+enable-docker-api:
+	@echo "Enabling docker API to the world"
+	grep '\-api\-enable\-cors \-H tcp://0.0.0.0:4243 \-H unix:///var/run/docker.sock' /etc/init/docker.conf || /bin/sh -c "sed -i 's/\-d/\-d \-api\-enable\-cors \-H tcp:\/\/0.0.0.0:4243 \-H unix:\/\/\/var\/run\/docker.sock/' /etc/init/docker.conf && initctl stop docker > /dev/null 2>&1 ; sleep 1 ; start docker"
+	grep 'chmod 666 /var/run/docker.sock' /etc/rc.local >/dev/null || sed -i 's/exit 0/chmod 666 \/var\/run\/docker.sock\nexit 0/' /etc/rc.local
+	sleep 5 && chmod 666 /var/run/docker.sock
 
 /usr/sbin/nginx:
 	@echo "Installing nginx"
@@ -101,12 +107,14 @@ docker-app-container:
 	@echo "Building the docker application conatiner"
 	@docker images | grep hbouvier/ubuntu_paas || docker build -t hbouvier/ubuntu_paas .
 
+shipyard:
+	docker run -d -p :8000 ehazlett/shipyard
+
 done:
 	@echo
-	@echo "Manual Steps on the paas.onprem box:"
-	@echo "    chmod 666 /var/run/docker.sock"
+	@echo "Manual Steps on the `hostname` box:"
 	@echo "    passwd addkey"
 	@echo "   "
 	@echo "Manual Steps on the the client box:"
-	@echo "  cat ~/.ssh/id_rsa.pub | ssh addkey@paas.onprem"
+	@echo "  cat ~/.ssh/id_rsa.pub | ssh addkey@`hostname`"
 
