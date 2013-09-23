@@ -72,7 +72,7 @@ data/app_container/paas/jdk-7u40-linux-x64.gz:
 	grep 'http://get.docker.io/ubuntu docker' /etc/apt/sources.list.d/docker.list || echo deb http://get.docker.io/ubuntu docker main > /etc/apt/sources.list.d/docker.list
 	apt-get update -y
 	apt-get install -y lxc-docker
-	apt-get install -y linux-image-extra-`uname -r`
+	-apt-get install -y linux-image-extra-`uname -r`
 
 enable-docker-api:
 	@echo "Enabling docker API to the world"
