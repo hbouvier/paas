@@ -18,7 +18,11 @@ function assert() {
 
 log "INFO" "Receiving public key"
 KEY=$(cat)
+assert "Receiving public key"
 
 log "INFO" "Sening key $KEY to be added"
 echo $KEY | nc -U /tmp/add-key.sock
+assert "Sending key to be added"
+
+rm -f "${LOGFILE}"
 log "INFO" "SUCCESS"

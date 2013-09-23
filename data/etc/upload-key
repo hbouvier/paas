@@ -5,14 +5,16 @@
 # sudo chmod +x /etc/init.d/upload-key
 # sudo update-rc.d upload-key defaults
 #
+PID=/run/upload-key.pid
+
 start() {
     echo "Starting upload-key..."
-    start-stop-daemon --start -b -x /usr/local/bin/uploadkeyd
+    start-stop-daemon --start -m --pidfile $PID --oknodo --retry 5 -b -x /usr/local/bin/uploadkeyd
 }
 
 stop() {
     echo "Stopping upload-key..."
-    start-stop-daemon --stop -x /usr/local/bin/uploadkeyd
+    start-stop-daemon --stop --pidfile $PID --oknodo
 }
 
 status() {

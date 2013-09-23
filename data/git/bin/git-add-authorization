@@ -18,14 +18,16 @@ function assert() {
 
 log "INFO" "Receiving public key"
 KEY=$(cat)
+assert "Receiving public key"
 USER=`echo $KEY | awk '{print $3}' 2> "${ERRORFILE}"`
 if [ "$USER" == "" ] ; then
 	log "WARN" "ssh public key format unknown" "expecting algo key user@host" "`cat ${ERRORFILE}`"
 	USER="anonymous"
 fi
-rm -f "${ERRORFILE}"
 
 log "INFO" "Adding key authorization" "USER=$USER" "public KEY=$KEY"
 echo $KEY | gitreceive upload-key "$USER"
+assert "adding public key to git authorization keys"
 
+rm -f "${ERRORFILE}"
 log "INFO" "SUCCESS"

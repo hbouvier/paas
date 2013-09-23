@@ -22,6 +22,10 @@ while [ 1 ] ; do
     rm -f /tmp/add-key.sock
     assert "rm -f /tmp/add-key.sock"
     sudo -u git /bin/bash -c "umask 000 ; nc -l -U /tmp/add-key.sock | /home/git/bin/git-add-authorization"
-    log "INFO" "adding key to git account"
+    if [ $? != 0 ] ; then
+        log "ERROR" "Unable to send key to be added"
+    else
+        log "INFO" "adding key to git account"
+    fi
 done
 

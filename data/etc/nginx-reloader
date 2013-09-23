@@ -5,14 +5,16 @@
 # sudo chmod +x /etc/init.d/nginx-reloader
 # sudo update-rc.d nginx-reloader defaults
 #
+PID=/run/nginx-reloader.pid
+
 start() {
     echo "Starting nginx-reloader..."
-    start-stop-daemon --start -b -x /usr/local/bin/nginx-reloaderd
+    start-stop-daemon --start --quiet -m --pidfile $PID --retry 5 --oknodo -b -x /usr/local/bin/nginx-reloaderd
 }
 
 stop() {
     echo "Stopping nginx_reloader..."
-    start-stop-daemon --stop -x /usr/local/bin/nginx-reloaderd
+    start-stop-daemon --stop --oknodo --pidfile $PID
 }
 
 status() {

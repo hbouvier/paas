@@ -22,20 +22,27 @@ log "INFO" "Building container for application $NAME"
 # Place the app inside the container
 log "INFO" "Receiving application source from git"
 ID=$(cat | docker run -i -a stdin hbouvier/ubuntu_paas /bin/bash -c "mkdir -p /app && tar -xC /app")
+assert "Installing $NAME in a container"
 docker wait $ID >/dev/null
+assert "docker wait $ID $NAME"
 docker commit $ID $NAME > /dev/null
 assert "docker commit $ID $NAME"
 
 log "INFO" "Docker commiting application $NAME (ID=$ID)"
 docker logs $ID 2>&1 | sed -e 's/^/        /'
+assert "Extracting container installation logs"
 
 # Run the builder script and attach to view output
 log "INFO" "Building application from source"
 ID=$(docker run -d $NAME /paas/build-application)
+assert "Building application $NAME in the container"
+
 docker attach $ID 2>&1 | sed -e 's/^/        /'
-assert "docker attach $ID"
+assert "Attaching to the container $ID to see the compilation logs"
 docker commit $ID $NAME > /dev/null
+assert "docker commit $ID $NAME"
 log "INFO" "Docker commiting application $NAME (ID=$ID)"
 docker logs $ID 2>&1 | sed -e 's/^/        /'
+assert "Extracting the logs of compilation for application $NAME $ID"
 
 log "INFO" "SUCCESS"
