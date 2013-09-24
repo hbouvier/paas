@@ -14,12 +14,51 @@ Once the installation is completed, you will have to set a password for the "add
 
 And then from any machine where you want to use this PAAS, add your public by:
 
-    cat ~/.ssh/id_rsa.pub | ssh addkey@__PAAS_HOST__ upload-client-key
-    
+    cat ~/.ssh/id_rsa.pub | ssh addkey@__PAAS_HOST__
+
 From that point you can push a new application onto the server using git:
 
     git remote add paas git@__PAAS_HOST__:__MyAppName__
     git push paas master
     open http://__MyAppName__.__PAAS_HOST__
-    
-    
+
+
+## Dynamic Application Routing
+
+On Mac OS X (Mountain Lion) here are the step I used to be able to use http://AppName.hostname/
+
+Create a file with the name of your paas host (e.g. the default is paas.onprem) in /etc/resolver:
+
+    /etc/resolver/paas.onprem
+
+With the content:
+
+    nameserver 127.0.0.1
+
+Then install dnsmasq using MacPort
+
+    sudo port install dnsmasq
+
+Create a file with the name of your paas host (e.g. the default is paas.onprem) in cat /etc/dnsmasq.d
+
+The content of the file should be in the form of
+
+    address=/.hostname/ip-address/
+    The default for the vagrant box should be:
+    address=/.paas.onprem/10.0.0.2/
+             ^- notice the starting dot!
+
+Then update/flush the DNS:
+
+    sudo killall -HUP mDNSResponder
+    sudo launchctl unload -w /Library/LaunchDaemons/org.macports.dnsmasq.plist
+    sudo launchctl load -w /Library/LaunchDaemons/org.macports.dnsmasq.plist
+    sudo killall -HUP mDNSResponder
+    sudo dscacheutil -flushcache
+
+
+The real solution is to use a real DNS name and make the A record point to your paas box.
+
+The worst solution is to use the PAAS box as you DNS.
+
+The "not fun" solution is to use to figure out the external (semi-random) port number and use http://paas.onprem:semi_random_port/

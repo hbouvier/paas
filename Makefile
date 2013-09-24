@@ -54,6 +54,7 @@ data/app_container/paas/jdk-7u40-linux-x64.gz:
 	@echo "then save it into the 'data/app_container/paas/' directory"
 	@echo "then run:"
 	@echo "sudo /bin/bash -c 'cd /root/paas && make'"
+	exit -1
 
 
 /usr/local/bin/gitreceive: 
