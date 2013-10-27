@@ -4,6 +4,11 @@ Base on Docker.io, gitreceive, git and Node.js, this is a small Platform As A Se
 
 This is largely based on dokku, but without the buildpack from heroku which are too heavy for my need. I simply use a docker image that contains NVM to install the appropriate version of node.js before deploying the app
 
+Dependencies:
+
+    sudo apt-get install -y build-essential
+    download the JDK and copy it under data/app_container/paas/
+
 To build the docker image, used to run JAVA and Node.js application, you have to download the [jdk 1.7](http://www.oracle.com/technetwork/java/javase/downloads/index.html) __manually__
 prior to run 'vagrant up', if running in vagrant or before running 'make' if installing bare metal. For this release, the scripts expect the JDK 1.7_40 for linux 64 bits (e.g. 'jdk-7u40-linux-x64.gz')
 Once donwloaded, move into ./data/app_container/paas/' directory.
