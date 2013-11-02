@@ -33,7 +33,7 @@ if [[ ! -f "$HOME/$APP/CONTAINER" ]]; then
 	ID=$(docker run -d -p $PORT -e PORT=$PORT $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
 	assert "Staring application $APP in container $ID"
 	echo $ID > "$HOME/$APP/CONTAINER"
-	NGINXPORT=$(docker port $ID $PORT)
+	NGINXPORT=$(docker port $ID $PORT | cut -f2 -d:)
 	assert "Extracting public port for application $APP"
 	log "INFO" "Application $CONTAINER" "ID=$ID" "NGINX PORT=$NGINXPORT"
 	if [[ ! -f "$HOME/$APP/PORT" ]] ; then

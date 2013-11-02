@@ -26,6 +26,7 @@ clean:
 	cp -R data/git/ /home/
 	hostname > /home/git/DOMAIN
 	chown -R git /home/git
+	usermod -a -G docker git
 	@touch .setup-git
 
 .install-services:
@@ -78,8 +79,8 @@ data/app_container/paas/jdk-7u40-linux-x64.gz:
 enable-docker-api:
 	@echo "Enabling docker API to the world"
 	grep '\-api\-enable\-cors \-H tcp://0.0.0.0:4243 \-H unix:///var/run/docker.sock' /etc/init/docker.conf || /bin/sh -c "sed -i 's/\-d/\-d \-api\-enable\-cors \-H tcp:\/\/0.0.0.0:4243 \-H unix:\/\/\/var\/run\/docker.sock/' /etc/init/docker.conf && initctl stop docker > /dev/null 2>&1 ; sleep 1 ; start docker"
-	grep 'chmod 666 /var/run/docker.sock' /etc/rc.local >/dev/null || sed -i 's/exit 0/chmod 666 \/var\/run\/docker.sock\nexit 0/' /etc/rc.local
-	sleep 5 && chmod 666 /var/run/docker.sock
+	#grep 'chmod 666 /var/run/docker.sock' /etc/rc.local >/dev/null || sed -i 's/exit 0/chmod 666 \/var\/run\/docker.sock\nexit 0/' /etc/rc.local
+	#sleep 5 && chmod 666 /var/run/docker.sock
 
 /usr/sbin/nginx:
 	@echo "Installing nginx"
