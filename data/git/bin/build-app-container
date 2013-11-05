@@ -17,11 +17,15 @@ function assert() {
 }
 
 NAME="$1"
+APP="$2"
+PORT="$3"
+DOMAIN=`cat /home/git/DOMAIN`
+
 log "INFO" "Building container for application $NAME"
 
 # Place the app inside the container
 log "INFO" "Receiving application source from git"
-ID=$(cat | docker run -i -a stdin hbouvier/ubuntu_paas /bin/bash -c "mkdir -p /app && tar -xC /app")
+ID=$(cat | docker run -i -a stdin hbouvier/ubuntu_paas /bin/bash -c "mkdir -p /app && tar -xC /app && echo 'export BASEURL=${APP}.${DOMAIN}' > /.env ; echo 'export BASEPORT=80' >> /.env")
 assert "Installing $NAME in a container"
 docker wait $ID >/dev/null
 assert "docker wait $ID $NAME"

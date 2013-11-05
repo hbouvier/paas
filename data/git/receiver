@@ -20,7 +20,7 @@ log "INFO" "git receiving" "APP=$APP" "CONTAINER=$CONTAINER"
 
 log "Building application container $APP"
 log "=========================================================================="
-cat | $HOME/bin/build-app-container $CONTAINER
+cat | $HOME/bin/build-app-container $CONTAINER $APP 5000
 log "=========================================================================="
 log "INFO" "SUCCESS"
 log "=========================================================================="

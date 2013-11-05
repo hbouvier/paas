@@ -29,6 +29,10 @@ if [ ! -r "Procfile" ] ; then
     exit -1
 fi
 
+if [ -r /.env ] ; then
+	. /.env
+fi
+
 WEB=`grep web Procfile | cut -f2-99 -d:`
 assert "extracting 'web:' line from Procfile"
 
@@ -70,6 +74,9 @@ if [ "$CMD" == "node" -o "$CMD" == "forever" -o "$CMD" == "pm2" ] ; then
     cat > ./.paas-start-cmd << EOF_NODE
 #/bin/bash
 . /.nvm/nvm.sh
+if [ -r /.env ] ; then
+	. /.env
+fi
 nvm use ${NODE}
 cd /app
 $WEB
