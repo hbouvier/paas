@@ -19,6 +19,9 @@ RUN /bin/bash -c '. /.nvm/nvm.sh && nvm install v0.10.18 && nvm use v0.10.18 && 
 ADD data/app_container/paas /paas
 RUN chmod a+x /paas/build-application
 
+# JDK 1.6
+apt-get install -y openjdk-6-jdk
+
 # JDK 1.7
 # RUN apt-get install -y python-software-properties
 # RUN add-apt-repository -y ppa:webupd8team/java

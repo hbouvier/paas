@@ -1,24 +1,24 @@
 GITRECEIVE_URL ?= https://raw.github.com/progrium/gitreceive/master/gitreceive
 
-all: data/app_container/paas/jdk-7u40-linux-x64.gz dependencies .setup-git start-services enable-docker-api shipyard done
+all: data/app_container/paas/jdk-7u40-linux-x64.gz dependencies .setup-git start-services enable-docker-api fix-groups fix-sshd done
 
 dependencies: /usr/local/bin/gitreceive /home/git/receiver /usr/bin/docker \
 	        docker-app-container /usr/sbin/nginx /home/addkey /etc/dnsmasq.d/paas \
 	        .install-binaries .install-services
 
 clean:
-	deluser git --remove-home
-	deluser addkey --remove-home
-	service stop upload-key
-	service stop nginx-reloader
-	service stop dnsmasq
-	apt-get remove -y nginx dnsmask lxc-docker
-	rm -f /usr/local/bin/uploadkeyd /etc/init.d/upload-key
-	update-rc.d upload-key remove
-	rm -f /usr/local/bin/nginx-reloaderd /etc/init.d/nginx-reloader
-	update-rc.d nginx-reloader remove
-	rm -f /usr/local/bin/upload-client-key /usr/local/bin/gitreceive
-	rm -f .setup-git .install-services .install-binaries
+	-deluser git --remove-home
+	-deluser addkey --remove-home
+	-service stop upload-key
+	-service stop nginx-reloader
+	-service stop dnsmasq
+	-apt-get remove -y nginx dnsmask lxc-docker
+	-rm -f /usr/local/bin/uploadkeyd /etc/init.d/upload-key
+	-update-rc.d upload-key remove
+	-rm -f /usr/local/bin/nginx-reloaderd /etc/init.d/nginx-reloader
+	-update-rc.d nginx-reloader remove
+	-rm -f /usr/local/bin/upload-client-key /usr/local/bin/gitreceive
+	-rm -f .setup-git .install-services .install-binaries
 
 
 .setup-git:
@@ -26,7 +26,6 @@ clean:
 	cp -R data/git/ /home/
 	hostname > /home/git/DOMAIN
 	chown -R git /home/git
-	usermod -a -G docker git
 	@touch .setup-git
 
 .install-services:
@@ -108,6 +107,12 @@ start-services:
 docker-app-container:
 	@echo "Building the docker application conatiner"
 	@docker images | grep hbouvier/ubuntu_paas || docker build -t hbouvier/ubuntu_paas .
+
+fix-groups:
+	usermod -a -G docker git
+
+fix-sshd:
+	grep 'PasswordAuthentication no' /etc/ssh/sshd_config && sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config && service ssh restart
 
 shipyard:
 	docker run -d -p :8000 ehazlett/shipyard
