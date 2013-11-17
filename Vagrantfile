@@ -1,6 +1,6 @@
-BOX_NAME   = ENV["BOX_NAME"]   || "raring"
+BOX_NAME   = ENV["BOX_NAME"]   || "punchaku"
 BOX_URI    = ENV["BOX_URI"]    || "http://dl.dropbox.com/u/13510779/lxc-raring-amd64-2013-07-12.box"
-BOX_DOMAIN = ENV["BOX_DOMAIN"] || "paas.onprem"
+BOX_DOMAIN = ENV["BOX_DOMAIN"] || "punchaku"
 BOX_IP     = ENV["BOX_IP"]     || "10.0.0.2"
 BOX_MEM    = ENV["BOX_MEM"]    || "2048"
 

@@ -29,9 +29,20 @@ if [[ ! -f "$HOME/$APP/CONTAINER" ]]; then
 		assert "Restauring application $APP internal port: $PORT"
 	fi
 
-	log "INFO" "Starting application $CONTAINER" "PORT=$PORT"
-	ID=$(docker run -d -p $PORT -e PORT=$PORT $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
-	assert "Staring application $APP in container $ID"
+        if [ -r "$HOME/$APP/Dockinfo" ] ; then
+                PARAMS=`cat $HOME/$APP/Dockinfo`
+	        log "INFO" "starting the Docker Container: docker run -d ${PARAMS} $CONTAINER"
+	        ID=$(docker run -d ${PARAMS} $CONTAINER)
+	        assert "Running container $NAME"
+	        docker logs $ID 2>&1 | sed -e 's/^/        /'
+	        assert "Extracting the logs of container $NAME $ID"
+	else
+
+		log "INFO" "Starting application $CONTAINER" "PORT=$PORT"
+		ID=$(docker run -d -p $PORT -e PORT=$PORT $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
+		assert "Staring application $APP in container $ID"
+        fi
+
 	echo $ID > "$HOME/$APP/CONTAINER"
 	NGINXPORT=$(docker port $ID $PORT | cut -f2 -d:)
 	assert "Extracting public port for application $APP"
@@ -69,8 +80,17 @@ else
 	assert "Restoring private port"
 	NGINXPORT=$(< "$HOME/$APP/NGINXPORT")
 	assert "Restoring public port"
-	ID=$(docker run -d -p "$NGINXPORT:$PORT" -e "PORT=$PORT" $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
-	assert "Running application $APP on public port $NGINXPORT, private port $PORT, container $CONTAINER"
+        if [ -r "$HOME/$APP/Dockinfo" ] ; then
+                PARAMS=`cat $HOME/$APP/Dockinfo`
+                log "INFO" "starting the Docker Container: docker run -d ${PARAMS} $CONTAINER"
+                ID=$(docker run -d ${PARAMS} $CONTAINER)
+                assert "Running container $NAME"
+                docker logs $ID 2>&1 | sed -e 's/^/        /'
+                assert "Extracting the logs of container $NAME $ID"
+        else
+		ID=$(docker run -d -p "$NGINXPORT:$PORT" -e "PORT=$PORT" $CONTAINER /bin/bash -c "/app/.paas-start-cmd")
+		assert "Running application $APP on public port $NGINXPORT, private port $PORT, container $CONTAINER"
+	fi
 	echo $ID > "$HOME/$APP/CONTAINER"
 	assert "Saving running application container"
 	log "INFO" "Starting application $CONTAINER" "PORT=$PORT" "NGINXPORT=$NGINXPORT" "ID=$ID"

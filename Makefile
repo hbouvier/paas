@@ -112,7 +112,7 @@ fix-groups:
 	usermod -a -G docker git
 
 fix-sshd:
-	grep 'PasswordAuthentication no' /etc/ssh/sshd_config && sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config && service ssh restart
+	grep 'PasswordAuthentication no' /etc/ssh/sshd_config && sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config ; service ssh restart
 
 shipyard:
 	docker run -d -p :8000 ehazlett/shipyard
