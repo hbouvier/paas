@@ -44,7 +44,8 @@ if [ "${CODE}" == "0" ] ; then
 	docker build -t $NAME .  | sed -e 's/^/        /'
 	assert "docker build $ID $NAME"
 	if [ -r "Dockinfo" ] ; then
-		cp Dockinfo /home/git/${APP}/
+		log "INFO" "Copying Dockinfo to ${HOME}/${APP}/"
+		cp Dockinfo "${HOME}/${APP}/"
 	fi
 	
 else
@@ -76,8 +77,8 @@ fi
 
 log "INFO" "SUCCESS"
 if [ -r "${GITARCHIVE}" ] ; then
-	log "INFO" "rm -f ${GITARCHIVE}"
+	rm -f "${GITARCHIVE}"
 fi
 if [ "${GITARCHIVEDIR}" != "" -a -d "${GITARCHIVEDIR}" ] ; then
-	log "INFO" "rm -rf ${GITARCHIVE}"
+	rm -rf "${GITARCHIVE}"
 fi
